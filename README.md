@@ -39,4 +39,4 @@ belirtebilirsiniz.
 - `app.py`: Fotoğraf yükleme servisini çalıştıran Flask uygulaması.
 - `templates/`: HTML şablonları.
 - `requirements.txt`: Gerekli Python paketleri.
-- `uploads/`: Yüklenen fotoğrafların kaydedildiği klasör.
+- `/tmp/uploads`: Yüklenen fotoğrafların kaydedildiği geçici klasör.
