@@ -1,0 +1,10 @@
+{% extends 'base.html' %}
+{% block content %}
+{% if images %}
+  {% for image in images %}
+    <div><img src="{{ url_for('uploaded_file', filename=image) }}" alt="{{ image }}"></div>
+  {% endfor %}
+{% else %}
+  <p>Henüz yüklenmiş fotoğraf yok.</p>
+{% endif %}
+{% endblock %}
