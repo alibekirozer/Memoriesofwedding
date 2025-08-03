@@ -8,8 +8,9 @@ from flask import (
 )
 from werkzeug.utils import secure_filename
 import os
+import tempfile
 
-UPLOAD_FOLDER = 'uploads'
+UPLOAD_FOLDER = os.path.join(tempfile.gettempdir(), 'uploads')
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 
 app = Flask(__name__)
