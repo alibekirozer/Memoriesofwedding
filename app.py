@@ -1,4 +1,11 @@
-from flask import Flask, request, render_template_string, redirect, url_for
+from flask import (
+    Flask,
+    request,
+    render_template,
+    redirect,
+    url_for,
+    send_from_directory,
+)
 from werkzeug.utils import secure_filename
 import os
 
@@ -13,26 +20,9 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-FORM_HTML = """
-<!doctype html>
-<title>Fotoğraf Yükle</title>
-<h1>Fotoğraf Yükle</h1>
-<form method=post enctype=multipart/form-data>
-  <input type=file name=file>
-  <input type=submit value=Yükle>
-</form>
-"""
-
-SUCCESS_HTML = """
-<!doctype html>
-<title>Yükleme Başarılı</title>
-<h1>Fotoğraf yüklendi!</h1>
-<a href="{{ url_for('upload_file') }}">Başka fotoğraf yükle</a>
-"""
-
-@app.route('/', methods=['GET'])
+@app.route('/')
 def index():
-    return redirect(url_for('upload_file'))
+    return render_template('index.html')
 
 @app.route('/upload', methods=['GET', 'POST'])
 def upload_file():
@@ -46,10 +36,21 @@ def upload_file():
             filename = secure_filename(file.filename)
             path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
             file.save(path)
-            return render_template_string(SUCCESS_HTML)
+            return render_template('success.html')
         else:
             return 'Geçersiz dosya türü', 400
-    return render_template_string(FORM_HTML)
+    return render_template('upload.html')
+
+
+@app.route('/uploads/<filename>')
+def uploaded_file(filename):
+    return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
+
+
+@app.route('/gallery')
+def gallery():
+    images = [f for f in os.listdir(app.config['UPLOAD_FOLDER']) if allowed_file(f)]
+    return render_template('gallery.html', images=images)
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)

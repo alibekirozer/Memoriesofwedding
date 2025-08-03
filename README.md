@@ -1,9 +1,11 @@
 # Memories of Wedding
 
 Bu basit uygulama, düğüne katılan misafirlerin çektikleri fotoğrafları kolayca
-size iletebilmesi için hazırlanmıştır. Misafirler QR kodu taradıklarında fotoğraf
-yükleme sayfasına yönlendirilir ve cihazlarındaki fotoğrafları "Yükle" butonu
-ile paylaşabilirler.
+size iletebilmesi için hazırlanmıştır. Artık ana sayfada karşılayıcı bir mesaj,
+fotoğraf yükleme formu ve yüklenen fotoğrafları görebileceğiniz bir galeri
+bulunmaktadır. Misafirler QR kodu taradıklarında fotoğraf yükleme sayfasına
+veya doğrudan ana sayfaya yönlendirilerek cihazlarındaki fotoğrafları "Yükle"
+butonu ile paylaşabilirler.
 
 ## Kurulum
 
@@ -20,9 +22,11 @@ pip install -r requirements.txt
 python app.py
 ```
 
-Uygulama 5000 portunda çalışacaktır. QR kodunuzu `http://<sunucu_adresi>:5000/upload`
-adresine yönlendirebilirsiniz. Örneğin, kendi bilgisayarınızda test etmek için
-`http://localhost:5000/upload` adresini kullanabilirsiniz.
+Uygulama 5000 portunda çalışacaktır. Ana sayfa `http://<sunucu_adresi>:5000/`
+adresinde, fotoğraf yükleme formu `http://<sunucu_adresi>:5000/upload` ve
+galeri `http://<sunucu_adresi>:5000/gallery` adresinde yer alır. Örneğin, kendi
+bilgisayarınızda test etmek için `http://localhost:5000/` adresini
+kullanabilirsiniz.
 
 ## QR Kod Oluşturma
 
@@ -33,5 +37,6 @@ belirtebilirsiniz.
 ## Dosyalar
 
 - `app.py`: Fotoğraf yükleme servisini çalıştıran Flask uygulaması.
+- `templates/`: HTML şablonları.
 - `requirements.txt`: Gerekli Python paketleri.
 - `uploads/`: Yüklenen fotoğrafların kaydedildiği klasör.
