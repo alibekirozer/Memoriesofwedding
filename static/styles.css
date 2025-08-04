@@ -49,6 +49,13 @@ nav a:hover {
   padding: 2rem 0;
 }
 
+.hero-image {
+  width: 100%;
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
+  object-fit: cover;
+}
+
 .hero p {
   font-size: 1.2rem;
   margin-bottom: 1.5rem;
