@@ -1,12 +1,15 @@
 :root {
-  --primary-color: #6a1b9a;
-  --secondary-color: #f3e5f5;
+  --primary-color: #4caf50;
+  --secondary-color: #fffde7;
   --text-color: #333;
 }
 
 body {
   font-family: 'Poppins', sans-serif;
-  background: var(--secondary-color);
+  background-color: var(--secondary-color);
+  background-image: url('daisy.svg');
+  background-size: 80px 80px;
+  background-repeat: repeat;
   margin: 0;
   color: var(--text-color);
 }
