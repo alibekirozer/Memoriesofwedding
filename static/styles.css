@@ -2,12 +2,13 @@
   /* Softer palette for an elegant wedding theme */
   --primary-color: #a7c957;
   --secondary-color: #fffdf8;
+  --background-color: #ffffff;
   --text-color: #333;
 }
 
 body {
   font-family: 'Poppins', sans-serif;
-  background-color: var(--secondary-color);
+  background-color: var(--background-color);
   margin: 0;
   color: var(--text-color);
 }
@@ -114,8 +115,8 @@ nav a:hover {
 /* Minimal floating daisies */
 .daisy {
   position: absolute;
-  width: 8px;
-  height: 8px;
+  width: 10px;
+  height: 10px;
   transform-style: preserve-3d;
   animation: float 10s ease-in-out infinite;
 }
