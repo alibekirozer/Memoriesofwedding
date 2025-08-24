@@ -3,7 +3,10 @@
 {% if images %}
 <div class="gallery-grid">
   {% for image in images %}
-    <div><img src="{{ url_for('uploaded_file', filename=image) }}" alt="{{ image }}"></div>
+    <div>
+      <img src="{{ url_for('view_image', filename=image) }}" alt="{{ image }}">
+      <div><a href="{{ url_for('download_image', filename=image) }}">İndir</a></div>
+    </div>
   {% endfor %}
 </div>
 {% else %}

@@ -2,21 +2,28 @@ from flask import (
     Flask,
     request,
     render_template,
-    redirect,
     url_for,
-    send_from_directory,
+    send_file,
+    abort,
 )
 from werkzeug.utils import secure_filename
+from io import BytesIO
 import os
-import tempfile
 
-UPLOAD_FOLDER = os.path.join(tempfile.gettempdir(), 'uploads')
+import firebase_admin
+from firebase_admin import credentials, storage
+
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 
 app = Flask(__name__)
-app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+cred_path = os.environ.get('GOOGLE_APPLICATION_CREDENTIALS')
+bucket_name = os.environ.get('FIREBASE_STORAGE_BUCKET')
+if cred_path and bucket_name and not firebase_admin._apps:
+    cred = credentials.Certificate(cred_path)
+    firebase_admin.initialize_app(cred, {'storageBucket': bucket_name})
+
+bucket = storage.bucket()
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
@@ -35,22 +42,45 @@ def upload_file():
             return 'Dosya seçilmedi', 400
         if file and allowed_file(file.filename):
             filename = secure_filename(file.filename)
-            path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-            file.save(path)
+            blob = bucket.blob(filename)
+            blob.upload_from_file(file, content_type=file.content_type)
             return render_template('success.html')
         else:
             return 'Geçersiz dosya türü', 400
     return render_template('upload.html')
 
 
-@app.route('/uploads/<filename>')
-def uploaded_file(filename):
-    return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
+@app.route('/image/<filename>')
+def view_image(filename):
+    blob = bucket.blob(filename)
+    if not blob.exists():
+        abort(404)
+    file_stream = BytesIO()
+    blob.download_to_file(file_stream)
+    file_stream.seek(0)
+    return send_file(file_stream, mimetype=blob.content_type)
+
+
+@app.route('/download/<filename>')
+def download_image(filename):
+    blob = bucket.blob(filename)
+    if not blob.exists():
+        abort(404)
+    file_stream = BytesIO()
+    blob.download_to_file(file_stream)
+    file_stream.seek(0)
+    return send_file(
+        file_stream,
+        mimetype=blob.content_type,
+        as_attachment=True,
+        download_name=filename,
+    )
 
 
 @app.route('/gallery')
 def gallery():
-    images = [f for f in os.listdir(app.config['UPLOAD_FOLDER']) if allowed_file(f)]
+    blobs = bucket.list_blobs()
+    images = [b.name for b in blobs if allowed_file(b.name)]
     return render_template('gallery.html', images=images)
 
 if __name__ == '__main__':

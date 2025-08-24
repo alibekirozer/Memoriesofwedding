@@ -28,6 +28,11 @@ galeri `http://<sunucu_adresi>:5000/gallery` adresinde yer alır. Örneğin, ken
 bilgisayarınızda test etmek için `http://localhost:5000/` adresini
 kullanabilirsiniz.
 
+4. Firebase Storage kullanmak için aşağıdaki ortam değişkenlerini ayarlayın:
+
+   - `GOOGLE_APPLICATION_CREDENTIALS`: Firebase servis hesabı JSON dosyasının yolu
+   - `FIREBASE_STORAGE_BUCKET`: Firebase Storage bucket adı
+
 ## QR Kod Oluşturma
 
 QR kod oluşturmak için [qr-code-generator.com](https://www.qr-code-generator.com/)
@@ -39,4 +44,3 @@ belirtebilirsiniz.
 - `app.py`: Fotoğraf yükleme servisini çalıştıran Flask uygulaması.
 - `templates/`: HTML şablonları.
 - `requirements.txt`: Gerekli Python paketleri.
-- `/tmp/uploads`: Yüklenen fotoğrafların kaydedildiği geçici klasör.
