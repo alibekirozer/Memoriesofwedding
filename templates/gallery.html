@@ -3,7 +3,7 @@
 {% if images %}
 <div class="gallery-grid">
   {% for image in images %}
-    <div><img src="{{ url_for('uploaded_file', filename=image) }}" alt="{{ image }}"></div>
+    <div><img src="{{ image if hosted else url_for('uploaded_file', filename=image) }}" alt="uploaded image"></div>
   {% endfor %}
 </div>
 {% else %}
