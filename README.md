@@ -22,6 +22,20 @@ pip install -r requirements.txt
 python app.py
 ```
 
+### Firebase ile Kullanım
+
+Fotoğrafları [Firebase Storage](https://firebase.google.com/docs/storage) üzerinde
+saklamak için aşağıdaki ortam değişkenlerini tanımlayın:
+
+```bash
+export FIREBASE_BUCKET="gs://memoriesofwedding.firebasestorage.app"  # veya kendi bucket adınız
+export GOOGLE_APPLICATION_CREDENTIALS="/path/to/serviceAccountKey.json"
+```
+
+Bu değişkenler ayarlandığında yüklenen fotoğraflar belirtilen Firebase
+bucket'ına kaydedilir ve galeri sayfasında oradan listelenir. Değişkenler
+tanımlanmazsa dosyalar yerel geçici klasörde saklanır.
+
 Uygulama 5000 portunda çalışacaktır. Ana sayfa `http://<sunucu_adresi>:5000/`
 adresinde, fotoğraf yükleme formu `http://<sunucu_adresi>:5000/upload` ve
 galeri `http://<sunucu_adresi>:5000/gallery` adresinde yer alır. Örneğin, kendi
@@ -39,4 +53,4 @@ belirtebilirsiniz.
 - `app.py`: Fotoğraf yükleme servisini çalıştıran Flask uygulaması.
 - `templates/`: HTML şablonları.
 - `requirements.txt`: Gerekli Python paketleri.
-- `/tmp/uploads`: Yüklenen fotoğrafların kaydedildiği geçici klasör.
+- `/tmp/uploads`: Firebase kullanılmadığında yüklenen fotoğrafların kaydedildiği geçici klasör.
