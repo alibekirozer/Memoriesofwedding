@@ -8,6 +8,7 @@ from flask import (
 )
 from werkzeug.utils import secure_filename
 from io import BytesIO
+import logging
 import os
 
 import firebase_admin
@@ -17,13 +18,23 @@ ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 
 app = Flask(__name__)
 
-cred_path = os.environ.get('GOOGLE_APPLICATION_CREDENTIALS')
-bucket_name = os.environ.get('FIREBASE_STORAGE_BUCKET')
-if cred_path and bucket_name and not firebase_admin._apps:
-    cred = credentials.Certificate(cred_path)
-    firebase_admin.initialize_app(cred, {'storageBucket': bucket_name})
+logging.basicConfig(level=logging.INFO)
 
-bucket = storage.bucket()
+bucket = None
+try:
+    cred_path = os.environ.get("GOOGLE_APPLICATION_CREDENTIALS")
+    bucket_name = os.environ.get("FIREBASE_STORAGE_BUCKET")
+    if cred_path and bucket_name:
+        if not firebase_admin._apps:
+            cred = credentials.Certificate(cred_path)
+            firebase_admin.initialize_app(cred, {"storageBucket": bucket_name})
+        bucket = storage.bucket()
+    else:
+        logging.warning(
+            "Firebase credentials or storage bucket not set; file uploads disabled"
+        )
+except Exception as e:
+    logging.error(f"Failed to initialize Firebase: {e}")
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
@@ -34,6 +45,8 @@ def index():
 
 @app.route('/upload', methods=['GET', 'POST'])
 def upload_file():
+    if bucket is None:
+        abort(500, description="Storage not configured")
     if request.method == 'POST':
         if 'file' not in request.files:
             return 'Dosya bulunamadı', 400
@@ -52,6 +65,8 @@ def upload_file():
 
 @app.route('/image/<filename>')
 def view_image(filename):
+    if bucket is None:
+        abort(500, description="Storage not configured")
     blob = bucket.blob(filename)
     if not blob.exists():
         abort(404)
@@ -63,6 +78,8 @@ def view_image(filename):
 
 @app.route('/download/<filename>')
 def download_image(filename):
+    if bucket is None:
+        abort(500, description="Storage not configured")
     blob = bucket.blob(filename)
     if not blob.exists():
         abort(404)
@@ -79,6 +96,8 @@ def download_image(filename):
 
 @app.route('/gallery')
 def gallery():
+    if bucket is None:
+        abort(500, description="Storage not configured")
     blobs = bucket.list_blobs()
     images = [b.name for b in blobs if allowed_file(b.name)]
     return render_template('gallery.html', images=images)
