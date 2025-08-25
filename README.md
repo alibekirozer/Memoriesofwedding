@@ -30,8 +30,8 @@ kullanabilirsiniz.
 
 4. Firebase Storage kullanmak için aşağıdaki ortam değişkenlerini ayarlayın:
 
-   - `GOOGLE_APPLICATION_CREDENTIALS`: Firebase servis hesabı JSON dosyasının yolu
-   - `FIREBASE_STORAGE_BUCKET`: Firebase Storage bucket adı
+   - `GOOGLE_APPLICATION_CREDENTIALS`: Firebase servis hesabı JSON dosyasının yolu (dosyayı depo dışına koyun ve versiyon kontrolüne eklemeyin)
+   - `FIREBASE_STORAGE_BUCKET`: Firebase Storage bucket adı (örn. `proje-id.appspot.com`)
 
 ## QR Kod Oluşturma
 
