@@ -19,7 +19,15 @@ app = Flask(__name__)
 
 logging.basicConfig(level=logging.INFO)
 
-UPLOAD_FOLDER = os.path.join('static', 'uploads')
+# Vercel's serverless environment has a read-only filesystem except for `/tmp`.
+# When Firebase is not configured we store files locally, so use a writable
+# location if we're running on Vercel. Locally we keep using the `static/uploads`
+# directory so that previously uploaded files remain accessible.
+if os.environ.get("VERCEL"):
+    UPLOAD_FOLDER = os.path.join("/tmp", "uploads")
+else:
+    UPLOAD_FOLDER = os.path.join("static", "uploads")
+
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 bucket = None
