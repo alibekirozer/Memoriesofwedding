@@ -19,6 +19,9 @@ app = Flask(__name__)
 
 logging.basicConfig(level=logging.INFO)
 
+UPLOAD_FOLDER = os.path.join('static', 'uploads')
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+
 bucket = None
 try:
     cred_path = os.environ.get("GOOGLE_APPLICATION_CREDENTIALS")
@@ -30,7 +33,7 @@ try:
         bucket = storage.bucket()
     else:
         logging.warning(
-            "Firebase credentials or storage bucket not set; file uploads disabled"
+            "Firebase credentials or storage bucket not set; using local storage"
         )
 except Exception as e:
     logging.error(f"Failed to initialize Firebase: {e}")
@@ -44,8 +47,6 @@ def index():
 
 @app.route('/upload', methods=['GET', 'POST'])
 def upload_file():
-    if bucket is None:
-        abort(500, description="Storage not configured")
     if request.method == 'POST':
         if 'file' not in request.files:
             return 'Dosya bulunamadı', 400
@@ -54,8 +55,11 @@ def upload_file():
             return 'Dosya seçilmedi', 400
         if file and allowed_file(file.filename):
             filename = secure_filename(file.filename)
-            blob = bucket.blob(filename)
-            blob.upload_from_file(file, content_type=file.content_type)
+            if bucket:
+                blob = bucket.blob(filename)
+                blob.upload_from_file(file, content_type=file.content_type)
+            else:
+                file.save(os.path.join(UPLOAD_FOLDER, filename))
             return render_template('success.html')
         else:
             return 'Geçersiz dosya türü', 400
@@ -64,30 +68,40 @@ def upload_file():
 
 @app.route('/image/<filename>')
 def view_image(filename):
-    if bucket is None:
-        abort(500, description="Storage not configured")
-    blob = bucket.blob(filename)
-    if not blob.exists():
+    if bucket:
+        blob = bucket.blob(filename)
+        if not blob.exists():
+            abort(404)
+        file_stream = BytesIO()
+        blob.download_to_file(file_stream)
+        file_stream.seek(0)
+        return send_file(file_stream, mimetype=blob.content_type)
+    file_path = os.path.join(UPLOAD_FOLDER, filename)
+    if not os.path.exists(file_path):
         abort(404)
-    file_stream = BytesIO()
-    blob.download_to_file(file_stream)
-    file_stream.seek(0)
-    return send_file(file_stream, mimetype=blob.content_type)
+    return send_file(file_path)
 
 
 @app.route('/download/<filename>')
 def download_image(filename):
-    if bucket is None:
-        abort(500, description="Storage not configured")
-    blob = bucket.blob(filename)
-    if not blob.exists():
+    if bucket:
+        blob = bucket.blob(filename)
+        if not blob.exists():
+            abort(404)
+        file_stream = BytesIO()
+        blob.download_to_file(file_stream)
+        file_stream.seek(0)
+        return send_file(
+            file_stream,
+            mimetype=blob.content_type,
+            as_attachment=True,
+            download_name=filename,
+        )
+    file_path = os.path.join(UPLOAD_FOLDER, filename)
+    if not os.path.exists(file_path):
         abort(404)
-    file_stream = BytesIO()
-    blob.download_to_file(file_stream)
-    file_stream.seek(0)
     return send_file(
-        file_stream,
-        mimetype=blob.content_type,
+        file_path,
         as_attachment=True,
         download_name=filename,
     )
@@ -95,10 +109,11 @@ def download_image(filename):
 
 @app.route('/gallery')
 def gallery():
-    if bucket is None:
-        abort(500, description="Storage not configured")
-    blobs = bucket.list_blobs()
-    images = [b.name for b in blobs if allowed_file(b.name)]
+    if bucket:
+        blobs = bucket.list_blobs()
+        images = [b.name for b in blobs if allowed_file(b.name)]
+    else:
+        images = [f for f in os.listdir(UPLOAD_FOLDER) if allowed_file(f)]
     return render_template('gallery.html', images=images)
 
 if __name__ == '__main__':
