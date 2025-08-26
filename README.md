@@ -33,6 +33,8 @@ kullanabilirsiniz.
    - `GOOGLE_APPLICATION_CREDENTIALS`: Firebase servis hesabı JSON dosyasının yolu (dosyayı depo dışına koyun ve versiyon kontrolüne eklemeyin)
    - `FIREBASE_STORAGE_BUCKET`: Firebase Storage bucket adı (örn. `proje-id.appspot.com`)
 
+   Bu değişkenler ayarlanmazsa yüklenen dosyalar yerel olarak `static/uploads/` klasörüne kaydedilir.
+
 ## QR Kod Oluşturma
 
 QR kod oluşturmak için [qr-code-generator.com](https://www.qr-code-generator.com/)
