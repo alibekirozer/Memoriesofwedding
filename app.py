@@ -9,6 +9,7 @@ from werkzeug.utils import secure_filename
 from io import BytesIO
 import logging
 import os
+import uuid
 
 import firebase_admin
 from firebase_admin import credentials, storage
@@ -63,11 +64,13 @@ def upload_file():
             return 'Dosya seçilmedi', 400
         if file and allowed_file(file.filename):
             filename = secure_filename(file.filename)
+            ext = os.path.splitext(filename)[1].lower()
+            unique_name = f"{uuid.uuid4().hex}{ext}"
             if bucket:
-                blob = bucket.blob(filename)
+                blob = bucket.blob(unique_name)
                 blob.upload_from_file(file, content_type=file.content_type)
             else:
-                file.save(os.path.join(UPLOAD_FOLDER, filename))
+                file.save(os.path.join(UPLOAD_FOLDER, unique_name))
             return render_template('success.html')
         else:
             return 'Geçersiz dosya türü', 400
