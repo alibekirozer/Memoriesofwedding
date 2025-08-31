@@ -30,12 +30,16 @@ kullanabilirsiniz.
 
 4. Firebase Storage kullanmak için aşağıdaki ortam değişkenlerini ayarlayın:
 
-   - `GOOGLE_APPLICATION_CREDENTIALS`: Firebase servis hesabı JSON dosyasının yolu (dosyayı depo dışına koyun ve versiyon kontrolüne eklemeyin)
+   - `GOOGLE_APPLICATION_CREDENTIALS`: Firebase servis hesabı JSON dosyasının yolu (dosyayı depo dışına koyun ve versiyon kontrole eklemeyin)
    - `FIREBASE_STORAGE_BUCKET`: Firebase Storage bucket adı (örn. `proje-id.appspot.com`)
 
-    Bu değişkenler ayarlanmazsa yüklenen dosyalar yerel olarak `static/uploads/` klasörüne kaydedilir.
-    Yüklenen her fotoğraf benzersiz bir adla kaydedilir; böylece aynı dosya adını kullanan farklı
-    yüklemeler önceki fotoğrafların üzerine yazılmaz.
+   Bu değişkenler ayarlanmazsa yüklenen dosyalar yerel olarak `static/uploads/` klasörüne kaydedilir.
+   Yüklenen her fotoğraf benzersiz bir adla kaydedilir; böylece aynı dosya adını kullanan farklı
+   yüklemeler önceki fotoğrafların üzerine yazılmaz.
+
+5. Ziyaretçilerin fotoğrafları doğrudan Firebase Storage'a yükleyebilmesi için
+   `static/firebase-init.js` dosyasındaki `firebaseConfig` nesnesini kendi
+   Firebase projenize ait değerlerle güncelleyin.
 
 ## QR Kod Oluşturma
 
