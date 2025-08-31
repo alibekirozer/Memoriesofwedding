@@ -7,125 +7,111 @@ from flask import (
 )
 from werkzeug.utils import secure_filename
 from io import BytesIO
-import logging
 import os
-import uuid
+import sqlite3
 
-import firebase_admin
-from firebase_admin import credentials, storage
-
-ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
+ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "gif"}
 
 app = Flask(__name__)
 
-logging.basicConfig(level=logging.INFO)
+DATABASE = os.path.join(os.path.dirname(__file__), "images.db")
 
-# Vercel's serverless environment has a read-only filesystem except for `/tmp`.
-# When Firebase is not configured we store files locally, so use a writable
-# location if we're running on Vercel. Locally we keep using the `static/uploads`
-# directory so that previously uploaded files remain accessible.
-if os.environ.get("VERCEL"):
-    UPLOAD_FOLDER = os.path.join("/tmp", "uploads")
-else:
-    UPLOAD_FOLDER = os.path.join("static", "uploads")
 
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-
-bucket = None
-try:
-    cred_path = os.environ.get("GOOGLE_APPLICATION_CREDENTIALS")
-    bucket_name = os.environ.get("FIREBASE_STORAGE_BUCKET")
-    if cred_path and bucket_name:
-        if not firebase_admin._apps:
-            cred = credentials.Certificate(cred_path)
-            firebase_admin.initialize_app(cred, {"storageBucket": bucket_name})
-        bucket = storage.bucket()
-    else:
-        logging.warning(
-            "Firebase credentials or storage bucket not set; using local storage"
+def init_db():
+    conn = sqlite3.connect(DATABASE)
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS images (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            filename TEXT NOT NULL,
+            mimetype TEXT NOT NULL,
+            data BLOB NOT NULL
         )
-except Exception as e:
-    logging.error(f"Failed to initialize Firebase: {e}")
+        """
+    )
+    conn.commit()
+    conn.close()
+
+
+init_db()
+
 
 def allowed_file(filename):
-    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+    return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
 
-@app.route('/')
+
+@app.route("/")
 def index():
-    return render_template('index.html')
+    return render_template("index.html")
 
-@app.route('/upload', methods=['GET', 'POST'])
+
+@app.route("/upload", methods=["GET", "POST"])
 def upload_file():
-    if request.method == 'POST':
-        if 'file' not in request.files:
-            return 'Dosya bulunamadı', 400
-        file = request.files['file']
-        if file.filename == '':
-            return 'Dosya seçilmedi', 400
+    if request.method == "POST":
+        if "file" not in request.files:
+            return "Dosya bulunamadı", 400
+        file = request.files["file"]
+        if file.filename == "":
+            return "Dosya seçilmedi", 400
         if file and allowed_file(file.filename):
             filename = secure_filename(file.filename)
-            ext = os.path.splitext(filename)[1].lower()
-            unique_name = f"{uuid.uuid4().hex}{ext}"
-            if bucket:
-                blob = bucket.blob(unique_name)
-                blob.upload_from_file(file, content_type=file.content_type)
-            else:
-                file.save(os.path.join(UPLOAD_FOLDER, unique_name))
-            return render_template('success.html')
+            data = file.read()
+            mimetype = file.content_type
+            conn = sqlite3.connect(DATABASE)
+            conn.execute(
+                "INSERT INTO images (filename, mimetype, data) VALUES (?, ?, ?)",
+                (filename, mimetype, data),
+            )
+            conn.commit()
+            conn.close()
+            return render_template("success.html")
         else:
-            return 'Geçersiz dosya türü', 400
-    return render_template('upload.html')
+            return "Geçersiz dosya türü", 400
+    return render_template("upload.html")
 
 
-@app.route('/image/<filename>')
-def view_image(filename):
-    if bucket:
-        blob = bucket.blob(filename)
-        if not blob.exists():
-            abort(404)
-        file_stream = BytesIO()
-        blob.download_to_file(file_stream)
-        file_stream.seek(0)
-        return send_file(file_stream, mimetype=blob.content_type)
-    file_path = os.path.join(UPLOAD_FOLDER, filename)
-    if not os.path.exists(file_path):
-        abort(404)
-    return send_file(file_path)
+@app.route("/image/<int:image_id>")
+def view_image(image_id):
+    conn = sqlite3.connect(DATABASE)
+    cur = conn.execute(
+        "SELECT data, mimetype FROM images WHERE id = ?", (image_id,)
+    )
+    row = cur.fetchone()
+    conn.close()
+    if row:
+        data, mimetype = row
+        return send_file(BytesIO(data), mimetype=mimetype)
+    abort(404)
 
 
-@app.route('/download/<filename>')
-def download_image(filename):
-    if bucket:
-        blob = bucket.blob(filename)
-        if not blob.exists():
-            abort(404)
-        file_stream = BytesIO()
-        blob.download_to_file(file_stream)
-        file_stream.seek(0)
+@app.route("/download/<int:image_id>")
+def download_image(image_id):
+    conn = sqlite3.connect(DATABASE)
+    cur = conn.execute(
+        "SELECT filename, data, mimetype FROM images WHERE id = ?", (image_id,)
+    )
+    row = cur.fetchone()
+    conn.close()
+    if row:
+        filename, data, mimetype = row
         return send_file(
-            file_stream,
-            mimetype=blob.content_type,
+            BytesIO(data),
+            mimetype=mimetype,
             as_attachment=True,
             download_name=filename,
         )
-    file_path = os.path.join(UPLOAD_FOLDER, filename)
-    if not os.path.exists(file_path):
-        abort(404)
-    return send_file(
-        file_path,
-        as_attachment=True,
-        download_name=filename,
-    )
+    abort(404)
 
 
-@app.route('/gallery')
+@app.route("/gallery")
 def gallery():
-    if bucket:
-        blobs = bucket.list_blobs()
-        images = [b.name for b in blobs if allowed_file(b.name)]
-    else:
-        images = [f for f in os.listdir(UPLOAD_FOLDER) if allowed_file(f)]
-    return render_template('gallery.html', images=images)
+    conn = sqlite3.connect(DATABASE)
+    cur = conn.execute("SELECT id, filename FROM images ORDER BY id DESC")
+    images = [dict(id=row[0], filename=row[1]) for row in cur.fetchall()]
+    conn.close()
+    return render_template("gallery.html", images=images)
 
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000)
+
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=5000)
+
