@@ -1,7 +1,37 @@
 {% extends 'base.html' %}
 {% block content %}
-<form class="upload-form" method="post" enctype="multipart/form-data">
-  <input type="file" name="file" accept="image/*" required>
-  <button type="submit" class="btn">Yükle</button>
-</form>
-{% endblock %}
+<div class="upload-form">
+  <input type="file" id="photoInput" accept="image/*">
+  <button id="uploadButton" class="btn">Fotoğraf Yükle</button>
+</div>
+<script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-storage-compat.js"></script>
+<script>
+  // Firebase config values are injected from environment variables.
+  // See README.md for instructions on obtaining these from the Firebase console.
+  const firebaseConfig = {{ firebase_config | tojson }};
+  const app = firebase.initializeApp(firebaseConfig);
+  const storage = firebase.storage();
+
+  const fileInput = document.getElementById('photoInput');
+  const uploadButton = document.getElementById('uploadButton');
+
+    uploadButton.addEventListener('click', async () => {
+      const file = fileInput.files[0];
+      if (!file) {
+        alert('Lütfen önce bir dosya seçin.');
+        return;
+      }
+      try {
+        // Çakışmaları önlemek için dosya adına benzersiz bir önek ekle
+        const uniqueName = `${crypto.randomUUID()}-${file.name}`;
+        const storageRef = storage.ref(`uploads/${uniqueName}`);
+        await storageRef.put(file);
+        const downloadURL = await storageRef.getDownloadURL();
+        console.log('Dosya başarıyla yüklendi:', downloadURL);
+      } catch (error) {
+        console.error('Yükleme sırasında hata:', error);
+      }
+    });
+  </script>
+  {% endblock %}
