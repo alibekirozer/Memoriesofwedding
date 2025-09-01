@@ -1,7 +1,11 @@
 {% extends 'base.html' %}
 {% block content %}
-<form class="upload-form" method="post" enctype="multipart/form-data">
-  <input type="file" name="file" accept="image/*" required>
+<form id="uploadForm" class="upload-form">
+  <input type="file" id="fileInput" accept="image/*" required>
   <button type="submit" class="btn">Yükle</button>
 </form>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
+<script src="{{ url_for('static', filename='firebase-init.js') }}"></script>
+<script src="{{ url_for('static', filename='upload.js') }}"></script>
 {% endblock %}
