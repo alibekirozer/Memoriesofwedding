@@ -73,7 +73,15 @@ def upload_file():
             return render_template("success.html")
         else:
             return jsonify({"error": "Geçersiz dosya türü"}), 400
-    return render_template("upload.html")
+    firebase_config = {
+        "apiKey": os.environ.get("FIREBASE_API_KEY"),
+        "authDomain": os.environ.get("FIREBASE_AUTH_DOMAIN"),
+        "projectId": os.environ.get("FIREBASE_PROJECT_ID"),
+        "storageBucket": os.environ.get("FIREBASE_STORAGE_BUCKET"),
+        "messagingSenderId": os.environ.get("FIREBASE_MESSAGING_SENDER_ID"),
+        "appId": os.environ.get("FIREBASE_APP_ID"),
+    }
+    return render_template("upload.html", firebase_config=firebase_config)
 
 
 @app.route("/image/<filename>")
