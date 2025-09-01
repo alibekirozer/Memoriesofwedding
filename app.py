@@ -1,15 +1,12 @@
 from flask import (
     Flask,
-    request,
     render_template,
     send_file,
     abort,
     jsonify,
 )
-from werkzeug.utils import secure_filename
 from werkzeug.exceptions import RequestEntityTooLarge
 import os
-import uuid
 import logging
 
 ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "gif"}
@@ -53,26 +50,8 @@ def status():
     return jsonify({"status": "ok"})
 
 
-@app.route("/upload", methods=["GET", "POST"])
+@app.route("/upload", methods=["GET"])
 def upload_file():
-    if request.method == "POST":
-        if "file" not in request.files:
-            return jsonify({"error": "Dosya bulunamadı"}), 400
-        file = request.files["file"]
-        if file.filename == "":
-            return jsonify({"error": "Dosya seçilmedi"}), 400
-        if file and allowed_file(file.filename):
-            filename = secure_filename(file.filename)
-            ext = os.path.splitext(filename)[1].lower()
-            unique_name = f"{uuid.uuid4().hex}{ext}"
-            try:
-                file.save(os.path.join(UPLOAD_FOLDER, unique_name))
-            except OSError:
-                app.logger.exception("Dosya kaydedilirken hata oluştu")
-                return jsonify({"error": "Sunucu hatası"}), 500
-            return render_template("success.html")
-        else:
-            return jsonify({"error": "Geçersiz dosya türü"}), 400
     firebase_config = {
         "apiKey": os.environ.get("FIREBASE_API_KEY"),
         "authDomain": os.environ.get("FIREBASE_AUTH_DOMAIN"),
