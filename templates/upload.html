@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% block content %}
-<form class="upload-form" method="post" enctype="multipart/form-data">
-  <input type="file" name="file" accept="image/*" required>
-  <button type="submit" class="btn">Yükle</button>
-</form>
+<div class="upload-form">
+  <input type="file" id="photoInput" accept="image/*">
+  <button id="uploadButton" class="btn">Fotoğraf Yükle</button>
+</div>
 {% endblock %}
