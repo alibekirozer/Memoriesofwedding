@@ -28,14 +28,9 @@ galeri `http://<sunucu_adresi>:5000/gallery` adresinde yer alır. Örneğin, ken
 bilgisayarınızda test etmek için `http://localhost:5000/` adresini
 kullanabilirsiniz.
 
-4. Firebase Storage kullanmak için aşağıdaki ortam değişkenlerini ayarlayın:
-
-   - `GOOGLE_APPLICATION_CREDENTIALS`: Firebase servis hesabı JSON dosyasının yolu (dosyayı depo dışına koyun ve versiyon kontrolüne eklemeyin)
-   - `FIREBASE_STORAGE_BUCKET`: Firebase Storage bucket adı (örn. `proje-id.appspot.com`)
-
-    Bu değişkenler ayarlanmazsa yüklenen dosyalar yerel olarak `static/uploads/` klasörüne kaydedilir.
-    Yüklenen her fotoğraf benzersiz bir adla kaydedilir; böylece aynı dosya adını kullanan farklı
-    yüklemeler önceki fotoğrafların üzerine yazılmaz.
+Yüklenen dosyalar varsayılan olarak `static/uploads/` klasörüne kaydedilir.
+Her fotoğraf benzersiz bir adla saklanır; böylece aynı dosya adını kullanan
+farklı yüklemeler önceki fotoğrafların üzerine yazılmaz.
 
 ## QR Kod Oluşturma
 

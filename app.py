@@ -6,40 +6,22 @@ from flask import (
     abort,
 )
 from werkzeug.utils import secure_filename
-from io import BytesIO
 import os
-import sqlite3
+import uuid
 
 ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "gif"}
 
 app = Flask(__name__)
 
-# Store the SQLite database in a writable directory. Vercel serverless functions
-# run in a read-only filesystem except for ``/tmp``. Default to that location
-# but allow overriding via the ``DATABASE_DIR`` environment variable for local
-# development or custom deployments.
-DATABASE_DIR = os.environ.get("DATABASE_DIR", "/tmp")
-os.makedirs(DATABASE_DIR, exist_ok=True)
-DATABASE = os.path.join(DATABASE_DIR, "images.db")
+# Determine a writable upload directory. Vercel provides only ``/tmp`` for
+# write access, so use that when the ``VERCEL`` env var is set; otherwise keep
+# uploads under ``static/uploads`` for local development.
+if os.environ.get("VERCEL"):
+    UPLOAD_FOLDER = os.path.join("/tmp", "uploads")
+else:
+    UPLOAD_FOLDER = os.path.join("static", "uploads")
 
-
-def init_db():
-    conn = sqlite3.connect(DATABASE)
-    conn.execute(
-        """
-        CREATE TABLE IF NOT EXISTS images (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            filename TEXT NOT NULL,
-            mimetype TEXT NOT NULL,
-            data BLOB NOT NULL
-        )
-        """
-    )
-    conn.commit()
-    conn.close()
-
-
-init_db()
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 
 def allowed_file(filename):
@@ -61,60 +43,39 @@ def upload_file():
             return "Dosya seçilmedi", 400
         if file and allowed_file(file.filename):
             filename = secure_filename(file.filename)
-            data = file.read()
-            mimetype = file.content_type
-            conn = sqlite3.connect(DATABASE)
-            conn.execute(
-                "INSERT INTO images (filename, mimetype, data) VALUES (?, ?, ?)",
-                (filename, mimetype, data),
-            )
-            conn.commit()
-            conn.close()
+            ext = os.path.splitext(filename)[1].lower()
+            unique_name = f"{uuid.uuid4().hex}{ext}"
+            file.save(os.path.join(UPLOAD_FOLDER, unique_name))
             return render_template("success.html")
         else:
             return "Geçersiz dosya türü", 400
     return render_template("upload.html")
 
 
-@app.route("/image/<int:image_id>")
-def view_image(image_id):
-    conn = sqlite3.connect(DATABASE)
-    cur = conn.execute(
-        "SELECT data, mimetype FROM images WHERE id = ?", (image_id,)
-    )
-    row = cur.fetchone()
-    conn.close()
-    if row:
-        data, mimetype = row
-        return send_file(BytesIO(data), mimetype=mimetype)
-    abort(404)
+@app.route("/image/<filename>")
+def view_image(filename):
+    file_path = os.path.join(UPLOAD_FOLDER, filename)
+    if not os.path.exists(file_path):
+        abort(404)
+    return send_file(file_path)
 
 
-@app.route("/download/<int:image_id>")
-def download_image(image_id):
-    conn = sqlite3.connect(DATABASE)
-    cur = conn.execute(
-        "SELECT filename, data, mimetype FROM images WHERE id = ?", (image_id,)
+@app.route("/download/<filename>")
+def download_image(filename):
+    file_path = os.path.join(UPLOAD_FOLDER, filename)
+    if not os.path.exists(file_path):
+        abort(404)
+    return send_file(
+        file_path,
+        as_attachment=True,
+        download_name=filename,
     )
-    row = cur.fetchone()
-    conn.close()
-    if row:
-        filename, data, mimetype = row
-        return send_file(
-            BytesIO(data),
-            mimetype=mimetype,
-            as_attachment=True,
-            download_name=filename,
-        )
-    abort(404)
 
 
 @app.route("/gallery")
 def gallery():
-    conn = sqlite3.connect(DATABASE)
-    cur = conn.execute("SELECT id, filename FROM images ORDER BY id DESC")
-    images = [dict(id=row[0], filename=row[1]) for row in cur.fetchall()]
-    conn.close()
+    images = [f for f in os.listdir(UPLOAD_FOLDER) if allowed_file(f)]
+    images.sort(reverse=True)
     return render_template("gallery.html", images=images)
 
 
