@@ -4,14 +4,20 @@ from flask import (
     render_template,
     send_file,
     abort,
+    jsonify,
 )
 from werkzeug.utils import secure_filename
 import os
 import uuid
+import logging
 
 ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "gif"}
 
 app = Flask(__name__)
+logging.basicConfig(level=logging.INFO)
+
+# Limit upload size to 16MB to avoid timeouts on large files
+app.config["MAX_CONTENT_LENGTH"] = 16 * 1024 * 1024
 
 # Determine a writable upload directory. Vercel provides only ``/tmp`` for
 # write access, so use that when the ``VERCEL`` env var is set; otherwise keep
@@ -33,22 +39,32 @@ def index():
     return render_template("index.html")
 
 
+@app.route("/status")
+def status():
+    """Simple endpoint for uptime checks"""
+    return jsonify({"status": "ok"})
+
+
 @app.route("/upload", methods=["GET", "POST"])
 def upload_file():
     if request.method == "POST":
         if "file" not in request.files:
-            return "Dosya bulunamadı", 400
+            return jsonify({"error": "Dosya bulunamadı"}), 400
         file = request.files["file"]
         if file.filename == "":
-            return "Dosya seçilmedi", 400
+            return jsonify({"error": "Dosya seçilmedi"}), 400
         if file and allowed_file(file.filename):
             filename = secure_filename(file.filename)
             ext = os.path.splitext(filename)[1].lower()
             unique_name = f"{uuid.uuid4().hex}{ext}"
-            file.save(os.path.join(UPLOAD_FOLDER, unique_name))
+            try:
+                file.save(os.path.join(UPLOAD_FOLDER, unique_name))
+            except OSError:
+                app.logger.exception("Dosya kaydedilirken hata oluştu")
+                return jsonify({"error": "Sunucu hatası"}), 500
             return render_template("success.html")
         else:
-            return "Geçersiz dosya türü", 400
+            return jsonify({"error": "Geçersiz dosya türü"}), 400
     return render_template("upload.html")
 
 
