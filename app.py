@@ -7,6 +7,7 @@ from flask import (
     jsonify,
 )
 from werkzeug.utils import secure_filename
+from werkzeug.exceptions import RequestEntityTooLarge
 import os
 import uuid
 import logging
@@ -32,6 +33,13 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 def allowed_file(filename):
     return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
+
+
+@app.errorhandler(RequestEntityTooLarge)
+def handle_file_too_large(e):
+    """Return JSON response when the uploaded file exceeds the size limit."""
+    app.logger.warning("File too large: %s", e)
+    return jsonify({"error": "Dosya çok büyük"}), 413
 
 
 @app.route("/")
