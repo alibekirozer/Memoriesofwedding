@@ -4,8 +4,8 @@
 <div class="gallery-grid">
   {% for image in images %}
     <div>
-      <img src="{{ url_for('view_image', image_id=image.id) }}" alt="{{ image.filename }}">
-      <div><a href="{{ url_for('download_image', image_id=image.id) }}">İndir</a></div>
+      <img src="{{ url_for('view_image', filename=image) }}" alt="{{ image }}">
+      <div><a href="{{ url_for('download_image', filename=image) }}">İndir</a></div>
     </div>
   {% endfor %}
 </div>
