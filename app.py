@@ -14,7 +14,13 @@ ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "gif"}
 
 app = Flask(__name__)
 
-DATABASE = os.path.join(os.path.dirname(__file__), "images.db")
+# Store the SQLite database in a writable directory. Vercel serverless functions
+# run in a read-only filesystem except for ``/tmp``. Default to that location
+# but allow overriding via the ``DATABASE_DIR`` environment variable for local
+# development or custom deployments.
+DATABASE_DIR = os.environ.get("DATABASE_DIR", "/tmp")
+os.makedirs(DATABASE_DIR, exist_ok=True)
+DATABASE = os.path.join(DATABASE_DIR, "images.db")
 
 
 def init_db():
